@@ -1,8 +1,17 @@
-user: bro what is 2^2 ?
+Sample Flow of the Project
 
-a1_1: bro ! got it lah ! the answer would be 4
-a1_1: ohh man you dont know even kid lvl math? the answer is 4
-a1_1: 4
-a1_1: four
-a1_1: four is the result
-a1_2:
+1. twitter_client.py → Extracts tweets from Twitter API and saves them into extracted_tweets.json.
+
+
+2. sentiment_analysis.py → Analyzes the tweets using Gemini API for sentiment, engagement, keywords, and audience, then stores results in analyzed_tweets.json.
+
+
+3. run_prompt.py → Prepares the system prompt using the analyzed tweets and defines the output structure.
+
+
+4. create_tweet.py → Generates a new engaging tweet, predicts performance, and explains why it will perform well compared to the example tweets.
+
+
+
+➡️ End-to-End Run:
+twitter_client.py → sentiment_analysis.py → run_prompt.py → create_tweet.py
