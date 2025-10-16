@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prompt app</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --bg: #f18966;
+            --panel: #151a22;
+            --muted: #8b98a5;
+            --text: #e6edf3;
+            --primary: #3b82f6;
+            --primary-700: #2563eb;
+            --accent: #22c55e;
+            --danger: #ef4444;
+            --border: #273043;
+            --code: #0b0f14;
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+            background: radial-gradient(1200px 800px at 80% -20%, #1b2230 0%, transparent 60%) no-repeat, var(--bg);
+            color: var(--text);
+        }
+        .container {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        header {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 12px;
+            margin: 12px 0 10px;
+        }
+        .logo {
+            height: 36px;
+            width: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 0.5px;
+        }
+        h1 {
+            font-size: 22px;
+            margin: 0; }
+        .muted { color: var(--muted); font-size: 14px; }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            color: var(--text);
+            text-decoration: none;
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            font-weight: 600;
+        }
+        .tab.active { background: var(--primary); border-color: transparent; }
+        .panel {
+            background: rgba(21,26,34,0.8);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+        /* Steps panel styles */
+        details.panel {
+            padding: 0;
+        }
+        details.panel > summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            font-weight: 700;
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.00));
+            user-select: none;
+        }
+        details.panel[open] > summary {
+            border-bottom: 1px solid var(--border);
+        }
+        .steps {
+            padding: 12px 16px 16px 16px;
+        }
+        .steps ol {
+            margin: 0 0 8px 18px;
+            padding: 0;
+            display: grid;
+            gap: 10px;
+        }
+        .steps li {
+            line-height: 1.4;
+        }
+        code.inline {
+            background: #0c111a;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1px 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            font-size: 12px;
+            color: var(--text);
+        }
+        .flow-arrow {
+            display: block;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        /* End steps panel styles */
+        .row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .row:last-child { border-bottom: 0; }
+        textarea {
+            width: 100%;
+            resize: vertical;
+            min-height: 110px;
+            max-height: 50vh;
+            padding: 14px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #0c111a;
+            color: var(--text);
+            outline: none;
+            line-height: 1.5;
+        }
+        textarea:focus {
+            border-color: #335cfe99;
+            box-shadow: 0 0 0 3px #335cfe33;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 140px;
+        }
+        .btn {
+            appearance: none;
+            border: 1px solid transparent;
+            padding: 12px 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.02s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:hover { background: var(--primary-700); }
+        .btn:active { transform: translateY(1px); }
+        .btn.secondary {
+            background: transparent;
+            color: var(--text);
+            border-color: var(--border);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .kbd {
+            border: 1px solid var(--border);
+            border-bottom-width: 3px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            font-size: 12px;
+            background: #0c111a;
+            color: var(--muted);
+        }
+        .status {
+            padding: 8px 16px 0 16px;
+            font-size: 13px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--muted);
+        }
+        .dot.ok { background: var(--accent); }
+        .dot.err { background: var(--danger); }
+        .output-wrap { padding: 0; }
+        .output {
+            margin: 16px;
+            background: var(--code);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            overflow: auto;
+            max-height: 60vh;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            line-height: 1.45;
+        }
+        .row.footer {
+            grid-template-columns: 1fr auto auto;
+            align-items: center;
+        }
+        .hint { color: var(--muted); font-size: 12px; }
+        .right { display: flex; gap: 8px; }
+        @media (max-width: 720px) {
+            .row { grid-template-columns: 1fr; }
+            .controls { flex-direction: row; }
+            .row.footer { grid-template-columns: 1fr; gap: 8px; }
+            .right { justify-content: space-between; }
+        }
+
+        /* ---- Tweet Generator (layout like the screenshot) ---- */
+        .app-title {
+            font-size: clamp(28px, 5vw, 44px);
+            margin: 6px 0 18px 0;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            color: #7bb0ff;
+        }
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .tweet-card {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+        }
+        .tweet-text {
+            min-height: 60px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            line-height: 1.3;
+        }
+        .section-block {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .prediction-box, .explanation-box {
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 48px;
+        }
+        .brand-inline {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 8px;
+        }
+        /* Add a separate box for the A vs B comparison */
+        .compare-box {
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 48px;
+        }
+        /* ------------------------------------------------------ */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">PA</div>
+            <div>
+                <h1>NeuralTweet</h1>
+                <div class="muted">AI-Powered Tweet Generator</div>
+            </div>
+        </header>
+
+        <!-- Tweet Generator UI -->
+        <div class="panel" id="tweetUi">
+            <div class="input-row">
+                <input id="tweetPrompt" type="text" placeholder=" AI-powered content optimiser" />
+                <button id="tweetGenerate" class="btn" type="button">Prompt</button>
+            </div>
+            <div class="grid-2">
+                <div class="tweet-card">
+                    <h3>Tweet A</h3>
+                    <div id="tweetA" class="tweet-text">—</div>
+                </div>
+                <div class="tweet-card">
+                    <h3>Tweet B</h3>
+                    <div id="tweetB" class="tweet-text">—</div>
+                </div>
+            </div>
+            <!-- Separate box for the A vs B comparative analysis -->
+            <div class="section-block">
+                <h3>A vs B (Comparison)</h3>
+                <div id="compareBox" class="compare-box">—</div>
+            </div>
+            <div class="section-block">
+                <h3>Prediction</h3>
+                <div id="predictionBox" class="prediction-box">—</div>
+            </div>
+            <div class="section-block" style="border-bottom: 0;">
+                <h3>Explanation</h3>
+                <div id="explanationBox" class="explanation-box">—</div>
+            </div>
+        </div>
+        <!-- End Tweet Generator UI -->
+
+        <!-- Project Flow (collapsible) -->
+        <details class="panel" open>
+            <summary>Project Flow</summary>
+            <div class="steps">
+                <ol>
+                    <li><code class="inline">twitter_client.py</code> → Extracts tweets from Twitter API and saves them into <code class="inline">extracted_tweets.json</code>.</li>
+                    <li><code class="inline">sentiment_analysis.py</code> → Analyzes the tweets using Gemini API for sentiment, engagement, keywords, and audience, then stores results in <code class="inline">analyzed_tweets.json</code>.</li>
+                    <li><code class="inline">run_prompt.py</code> → Prepares the system prompt using the analyzed tweets and defines the output structure.</li>
+                    <li><code class="inline">create_tweet.py</code> → Generates a new engaging tweet, predicts performance, and explains why it will perform well compared to the example tweets.</li>
+                </ol>
+                <span class="flow-arrow">End-to-End: <code class="inline">twitter_client.py</code> → <code class="inline">sentiment_analysis.py</code> → <code class="inline">run_prompt.py</code> → <code class="inline">create_tweet.py</code></span>
+            </div>
+        </details>
+        <!-- End Project Flow -->
+
+        <div class="panel" id="app">
+            <div class="row">
+                <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
+                <div class="controls">
+                    <button id="runBtn" class="btn" type="button" title="Run (Ctrl/⌘ + Enter)">
+                        <span id="btnLabel">Run Prompt</span>
+                        <span id="btnSpinner" aria-hidden="true" style="display:none">⏳</span>
+                    </button>
+                    <button id="clearBtn" class="btn secondary" type="button" title="Clear input and output">Clear</button>
+                </div>
+            </div>
+            <div class="status">
+                <span class="dot" id="statusDot"></span>
+                <span id="statusText">Idle</span>
+                <span class="hint">Tip: Press <span class="kbd">Ctrl</span>/<span class="kbd">⌘</span> + <span class="kbd">Enter</span> to run</span>
+            </div>
+            <div class="output-wrap">
+                <div id="output" class="output" aria-live="polite" aria-busy="false">Output will appear here.</div>
+            </div>
+            <div class="row footer">
+                <div class="hint">Endpoint: http://127.0.0.1:5000/generate?prompt=...</div>
+                <div class="right">
+                    <button id="copyBtn" class="btn secondary" type="button" title="Copy output">Copy output</button>
+                    <button id="downloadBtn" class="btn secondary" type="button" title="Download output">Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const $ = (sel) => document.querySelector(sel);
+    const outputEl = $('#output');
+    const promptEl = $('#prompt');
+    const runBtn = $('#runBtn');
+    const clearBtn = $('#clearBtn');
+    const copyBtn = $('#copyBtn');
+    const downloadBtn = $('#downloadBtn');
+    const statusDot = $('#statusDot');
+    const statusText = $('#statusText');
+    const btnLabel = $('#btnLabel');
+    const btnSpinner = $('#btnSpinner');
+
+    // Tweet UI refs
+    const tweetPromptEl = $('#tweetPrompt');
+    const tweetGenerateBtn = $('#tweetGenerate');
+    const tweetAEl = $('#tweetA');
+    const tweetBEl = $('#tweetB');
+    const predictionEl = $('#predictionBox');
+    const explanationEl = $('#explanationBox');
+    const compareEl = $('#compareBox'); // new: separate comparison box
+
+    function setStatus(kind, text) {
+        statusDot.className = 'dot ' + (kind === 'ok' ? 'ok' : kind === 'err' ? 'err' : '');
+        statusText.textContent = text;
+    }
+    function setBusy(busy) {
+        runBtn.disabled = busy;
+        promptEl.disabled = busy;
+        outputEl.setAttribute('aria-busy', String(busy));
+        btnSpinner.style.display = busy ? 'inline' : 'none';
+        btnLabel.textContent = busy ? 'Running…' : 'Run Prompt';
+    }
+    function renderOutput(data) {
+        // Try to render into Tweet UI if the shape matches
+        if (tryRenderTweetUI(data)) {
+            // Also mirror a compact summary to the raw output panel
+            outputEl.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            return;
+        }
+
+        let candidate = null;
+        if (data == null) {
+            candidate = 'No data returned.';
+        } else if (typeof data === 'string') {
+            candidate = data;
+        } else if (typeof data === 'object') {
+            candidate = data.text || data.result || data.output || data.message || null;
+            if (!candidate) {
+                for (const [k, v] of Object.entries(data)) {
+                    if (typeof v === 'string' && v.trim()) { candidate = v; break; }
+                }
+            }
+            if (!candidate) {
+                candidate = JSON.stringify(data, null, 2);
+            }
+        } else {
+            candidate = String(data);
+        }
+        outputEl.textContent = candidate;
+    }
+
+    // Helper: extract "Tweet A" and "Tweet B" text from a comparison blob
+    function parseTweetsFromComparison(text) {
+        if (typeof text !== 'string') return { a: null, b: null };
+        // Common patterns: "Tweet A: ..." and "Tweet B: ..."
+        const aMatch = text.match(/Tweet\s*A\s*:\s*([\s\S]*?)(?:\n\s*Tweet\s*B\s*:|$)/i);
+        const bMatch = text.match(/Tweet\s*B\s*:\s*([\s\S]*)/i);
+
+        // Clean up: strip quotes, fences, headings
+        const clean = (s) => {
+            if (!s) return null;
+            return s
+                .replace(/^["'`]+|["'`]+$/g, '')
+                .replace(/^```[\s\S]*?\n|\n```$/g, '')
+                .replace(/^[-*•]\s*/gm, '')
+                .trim();
+        };
+
+        return {
+            a: clean(aMatch && aMatch[1]),
+            b: clean(bMatch && bMatch[1]),
+        };
+    }
+
+    // Attempt to populate the Tweet Generator layout
+    function tryRenderTweetUI(data) {
+        try {
+            if (data == null) return false;
+
+            // Normalize a few possible shapes
+            let a = null, b = null, pred = null, expl = null, cmp = null;
+
+            if (typeof data === 'object') {
+                a = data.tweetA || data.a || data.tweet || (Array.isArray(data.tweets) ? data.tweets[0] : null);
+                b = data.tweetB || data.b || (Array.isArray(data.tweets) ? data.tweets[1] : null);
+                pred = data.prediction || data.winner || data.best || null;
+                expl = data.explanation || data.why || null;
+                cmp = data.tweet_a_vs_tweet_b || data.comparison || data.compare || null;
+            }
+
+            if (!a || !b) {
+                // If backend didn't send A/B explicitly, try to derive from the comparison text
+                const { a: pa, b: pb } = parseTweetsFromComparison(cmp || '');
+                a = a || pa;
+                b = b || pb;
+            }
+
+            if (typeof data === 'string' && !a && !b && !pred && !expl) {
+                // Put unknown string outputs into comparison box by default
+                cmp = data;
+                const { a: pa, b: pb } = parseTweetsFromComparison(cmp);
+                a = pa || a;
+                b = pb || b;
+            }
+
+            // Fill UI when at least one field is present
+            if (a || b || pred || expl || cmp) {
+                tweetAEl.textContent = a || '—';
+                tweetBEl.textContent = b || '—';
+                predictionEl.textContent = pred || (a || b ? (b ? 'Tweet B' : 'Tweet A') : '—');
+                explanationEl.textContent = expl || '—';
+                compareEl.textContent = cmp || '—';
+                return true;
+            }
+            return false;
+        } catch {
+            return false;
+        }
+    }
+
+    async function runPrompt() {
+        const prompt = promptEl.value.trim();
+        if (!prompt) {
+            setStatus('err', 'Please enter a prompt.');
+            outputEl.textContent = 'Please enter a prompt to run.';
+            return;
+        }
+        try {
+            setBusy(true);
+            setStatus('', 'Contacting server…');
+            const url = `http://127.0.0.1:5000/generate?prompt=${encodeURIComponent(prompt)}`;
+            const resp = await fetch(url, { method: 'GET' });
+            if (!resp.ok) {
+                const text = await resp.text().catch(() => '');
+                throw new Error(`HTTP ${resp.status}: ${text || resp.statusText}`);
+            }
+            const contentType = resp.headers.get('content-type') || '';
+            let data;
+            if (contentType.includes('application/json')) {
+                data = await resp.json();
+            } else {
+                data = await resp.text();
+            }
+            renderOutput(data);
+            setStatus('ok', 'Done');
+        } catch (err) {
+            console.error(err);
+            setStatus('err', 'Request failed');
+            outputEl.textContent = `Error: ${(err && err.message) || String(err)}`;
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    // Trigger generation for the Tweet UI using the same endpoint
+    async function runTweetUiPrompt() {
+        const prompt = tweetPromptEl.value.trim();
+        if (!prompt) {
+            predictionEl.textContent = 'Please enter a prompt.';
+            return;
+        }
+        try {
+            setStatus('', 'Contacting server…');
+            const url = `http://127.0.0.1:5000/generate?prompt=${encodeURIComponent(prompt)}`;
+            const resp = await fetch(url, { method: 'GET' });
+            if (!resp.ok) {
+                const text = await resp.text().catch(() => '');
+                throw new Error(`HTTP ${resp.status}: ${text || resp.statusText}`);
+            }
+            const contentType = resp.headers.get('content-type') || '';
+            const data = contentType.includes('application/json') ? await resp.json() : await resp.text();
+            if (!tryRenderTweetUI(data)) {
+                explanationEl.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            }
+            setStatus('ok', 'Done');
+        } catch (err) {
+            console.error(err);
+            setStatus('err', 'Request failed');
+            explanationEl.textContent = `Error: ${(err && err.message) || String(err)}`;
+        }
+    }
+
+    function clearAll() {
+        promptEl.value = '';
+        outputEl.textContent = 'Output will appear here.';
+        setStatus('', 'Idle');
+        promptEl.focus();
+    }
+
+    async function copyOutput() {
+        try {
+            const text = outputEl.textContent || '';
+            await navigator.clipboard.writeText(text);
+            setStatus('ok', 'Copied output to clipboard');
+        } catch {
+            setStatus('err', 'Copy failed');
+        }
+    }
+
+    function downloadOutput() {
+        const blob = new Blob([outputEl.textContent || ''], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        a.download = `prompt-output-${stamp}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setStatus('ok', 'Downloaded output');
+    }
+
+    runBtn.addEventListener('click', runPrompt);
+    clearBtn.addEventListener('click', clearAll);
+    copyBtn.addEventListener('click', copyOutput);
+    downloadBtn.addEventListener('click', downloadOutput);
+
+    promptEl.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault();
+            runPrompt();
+        }
+    });
+
+    // Tweet UI interactions
+    tweetGenerateBtn.addEventListener('click', runTweetUiPrompt);
+    tweetPromptEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            runTweetUiPrompt();
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => promptEl.focus());
+</script>
+</body>
+</html>
